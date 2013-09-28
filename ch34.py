@@ -11,6 +11,8 @@ import csv
 import copy
 import itertools
 import random
+import scipy.stats as stats
+
 
 
 # import the csv file of data, put into 2 lists
@@ -173,19 +175,72 @@ class hypothesisTest(object):
         self.dataObject = readFile(self.dataFile)
         self.inferenceObject = randomInference(dataFile)
         if numTrials =='all':
-            self.ATEList = inferenceObject.simulateAllPermutations()
+            self.ATEList = self.inferenceObject.simulateAllPermutations()
         else:
-            self.ATEList = inferenceObject.simulateTrials(numTrials, randomSeed)
+            self.ATEList = self.inferenceObject.simulateTrials(numTrials, randomSeed)
+        self.ATE = self.inferenceObject.ATE()
+        self.x0, self.y0, self.treatCount = self.dataObject.getVarLists()
+        self.ATEList.sort()
+
+    def simplePValue(self, tails=1):
+        '''Performs a simple calculation of the p value for the null hypothesis based on pg. 62  Tails can equal 1 or 2'''
+        
+        randomizations = len(self.ATEList)
+        upper = 0.0
+        lower = 0.0
+        if tails==1:
+            for score in self.ATEList:
+                if score >= self.ATE:
+                    upper += 1
+                else:
+                    lower += 1
+            return upper/randomizations
+
+        elif tails==2:
+            for score in self.ATEList:
+                if abs(score) >= self.ATE:
+                    upper += 1
+                else:
+                    lower += 1
+            return upper/randomizations
+            
 
     def confidenceInterval(self, tails=1, alpha=0.05):
-        pass
+
+        randomizations = len(self.ATEList)
+        if tails==1:
+            print(int(randomizations*(1-alpha)))
+            n = self.ATEList[int(randomizations*(1-alpha))-1]
+            return n
+        elif tails==2:
+            nlow = self.ATEList[int(randomizations*(alpha/2))-1]
+            nhigh = self.ATEList[int(randomizations*(1-(alpha/2)))-1]
+            return[nlow,nhigh]
+                  
 
     def plot(self, tails=1, alpha=0.05):
-        pass
+        '''Simple plot to show randomizations, ATE, confidence intervals'''
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        x = range(len(self.ATEList))
+        y = self.ATEList
+
+        ax1.scatter(x,y,color='blue',marker="o",edgecolor='none')
+        ax1.axhline(self.ATE, color = "r", lw=2, label=("ATE="+str(self.ATE)))
+        if tails==1:
+            ax1.axhline(self.confidenceInterval(tails, alpha), color = "g", lw=2, label=("alpha="+str(alpha)))
+        elif tails ==2:
+            ax1.axhline(self.confidenceInterval(tails, alpha)[0], color = "g", lw=2, label=("alpha/2="+str(alpha/2)))
+            ax1.axhline(self.confidenceInterval(tails, alpha)[1], color = "g", lw=2, label=("alpha/2="+str(alpha/2)))
+            
+        ax1.grid(True)
+        ax1.legend(loc="upper left")
+        
+        ax1.set_aspect(1./ax1.get_data_ratio())
+        plt.show()
 
     
-
-            
 
         
         
