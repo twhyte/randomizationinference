@@ -1,3 +1,4 @@
+
 #####
 # Python 2.7.3
 # Chapters 3 and 4 - Field Experiments Problems
@@ -12,7 +13,6 @@ import copy
 import itertools
 import random
 import scipy.stats as stats
-
 
 
 # import the csv file of data, put into 2 lists
@@ -59,7 +59,7 @@ class randomInference(object):
     def ATE(self):
         '''Returns average treatment effect calculated from data with "?" blanks'''
         
-        x0, y0, treatCount = self.dataObject.getVarLists() # This should ideally converted into a call for an object instead of individual objects.
+        x0, y0, treatCount = self.dataObject.getVarLists() # This should ideally be converted into a call for an object instead of individual objects.
         meanHolder=0.0
         counter = 0
         xMean=0.0
@@ -87,7 +87,32 @@ class randomInference(object):
         yMean = meanHolder/counter
         treatmentEffect = yMean-xMean
         return treatmentEffect
-              
+
+    def standardError(self):
+        '''Returns the standard error of the estimated ATE'''
+
+        x0, y0, treatCount = self.dataObject.getVarLists()
+        ATE = self.ATE()
+
+        Y0 = []
+        Y1 = []
+        
+        for value in x0:
+            if value == "?":
+                pass
+            else:
+                Y0.append(value)
+
+        for value in y0:
+            if value == "?":
+                pass
+            else:
+                Y1.append(value)
+
+        n = len(Y0)+len(Y1)
+        m = len(Y1)
+
+        return np.sqrt((np.var(Y0, ddof=-1, dtype=np.float64)/(n-m))+(np.var(Y1, ddof=-1, dtype=np.float64)/m))
 
     def simulateAllPermutations(self):
         '''Iterates over all possible random permutations and returns a list of all possible ATEs.
@@ -104,7 +129,7 @@ class randomInference(object):
             else:
                 xNull.append(x0[fill])
 
-        yNull = copy.deepcopy(xNull) #
+        yNull = copy.deepcopy(xNull) 
         iterList = list(itertools.islice(itertools.combinations((range(len(x0))), treatCount), None)) # creates a list of tuples representing all possible permutations
 
         # main for loop
@@ -206,6 +231,7 @@ class hypothesisTest(object):
             
 
     def confidenceInterval(self, tails=1, alpha=0.05):
+        '''Returns either a value or a list of 2 values for confidence interval (really bad I know)'''
 
         randomizations = len(self.ATEList)
         if tails==1:
