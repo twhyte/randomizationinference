@@ -13,6 +13,7 @@ import copy
 import itertools
 import random
 import scipy.stats as stats
+from math import factorial
 
 
 # import the csv file of data, put into 2 lists
@@ -169,20 +170,31 @@ class randomInference(object):
         iterObject = itertools.combinations((range(len(x0))), treatCount)
 
         fullResults = []
+        perms=(factorial(len(x0))/(factorial(treatCount)*factorial(len(x0)-treatCount)))
+
+        
         random.seed(randomSeed)
+        start = random.randint(0, (perms/4))
+        permSteps=[]
+        for trial in range(numTrials):
+            permSteps.append(random.randint(0, numTrials*100))
 
-        pool = tuple(iterObject)
-        perm = tuple(random.sample(pool, numTrials))
-
-        for trialIndex in perm:
-
-            yTest = []
-            xTest = []
+        for n in permSteps:
+            xTest =[]
+            yTest=[]
             wereTreatedList = []
+
+            for q in range(n):
+                iterObject.next()
+
+            treat = tuple(iterObject.next())
+            print treat
+
+            # need to request itam from iterable here
             
-            for treat in trialIndex:
-                yTest.append(yNull[treat])
-                wereTreatedList.append(treat)
+            for treatStep in treat:
+                yTest.append(yNull[treatStep])
+                wereTreatedList.append(treatStep)
 
             for allIndex in range(len(xNull)):
                 if allIndex in wereTreatedList:
@@ -255,10 +267,10 @@ class hypothesisTest(object):
         ax1.scatter(x,y,color='blue',marker="o",edgecolor='none')
         ax1.axhline(self.ATE, color = "r", lw=2, label=("ATE="+str(self.ATE)))
         if tails==1:
-            ax1.axhline(self.confidenceInterval(tails, alpha), color = "g", lw=2, label=("alpha="+str(alpha)))
+            ax1.axhline(self.confidenceInterval(tails, alpha), color = "g", lw=2, label=("confidenceinterval="+str(self.confidenceInterval(tails, alpha))))
         elif tails ==2:
-            ax1.axhline(self.confidenceInterval(tails, alpha)[0], color = "g", lw=2, label=("alpha/2="+str(alpha/2)))
-            ax1.axhline(self.confidenceInterval(tails, alpha)[1], color = "g", lw=2, label=("alpha/2="+str(alpha/2)))
+            ax1.axhline(self.confidenceInterval(tails, alpha)[0], color = "g", lw=2, label=("confidenceinterval="+str(self.confidenceInterval(tails, alpha)[0])))
+            ax1.axhline(self.confidenceInterval(tails, alpha)[1], color = "g", lw=2, label=("confidenceinterval="+str(self.confidenceInterval(tails, alpha)[1])))
             
         ax1.grid(True)
         ax1.legend(loc="upper left")
